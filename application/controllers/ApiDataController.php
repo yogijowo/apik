@@ -11,7 +11,7 @@ class ApiDataController extends CI_Controller {
 
     public function index() {
         // URL API Penyedia
-        $api_penyedia_url = 'https://isb.lkpp.go.id/isb-2/api/1e9de562-0358-4afd-a7b4-94dac7b7d39b/json/3732/RUP-PaketPenyedia-Terumumkan/tipe/4:12/parameter/2023:D145';
+        $api_penyedia_url = 'https://isb.lkpp.go.id/isb-2/api/XXXX';
 
         // Ambil data dari API Penyedia
         $data_penyedia = file_get_contents($api_penyedia_url);
@@ -20,7 +20,7 @@ class ApiDataController extends CI_Controller {
         $data_penyedia = json_decode($data_penyedia, true);
 
         // URL API Swakelola
-        $api_swakelola_url = 'https://isb.lkpp.go.id/isb-2/api/4c77c70f-c5dc-4003-9a4c-3e31db51b9c1/json/3735/RUP-PaketSwakelola-Terumumkan/tipe/4:12/parameter/2023:D145';
+        $api_swakelola_url = 'https://isb.lkpp.go.id/isb-2/api/XXXX';
 
         // Ambil data dari API Swakelola
         $data_swakelola = file_get_contents($api_swakelola_url);
