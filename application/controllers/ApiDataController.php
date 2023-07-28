@@ -1,34 +1,26 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+
 class ApiDataController extends CI_Controller {
 
     public function __construct() {
         parent::__construct();
-        // Load helper URL untuk menggunakan fungsi "file_get_contents"
+        $this->load->model('ApiDataModel'); // Load model ApiDataModel
         $this->load->helper('url');
     }
 
     public function index() {
-        // URL API Penyedia
-        $api_penyedia_url = 'https://isb.lkpp.go.id/isb-2/api/XXXX';
+        // Load model dan ambil data dari API Penyedia, Swakelola dan StrukturAnggaran
+        $apiDataModel = new ApiDataModel();
+        $data_penyedia = $apiDataModel->getDataPenyedia();
+        $data_swakelola = $apiDataModel->getDataSwakelola();
+        $data_struktur_anggaran = $apiDataModel->getDataStrukturAnggaran();
 
-        // Ambil data dari API Penyedia
-        $data_penyedia = file_get_contents($api_penyedia_url);
-
-        // Konversi data JSON menjadi array asosiatif
-        $data_penyedia = json_decode($data_penyedia, true);
-
-        // URL API Swakelola
-        $api_swakelola_url = 'https://isb.lkpp.go.id/isb-2/api/XXXX';
-
-        // Ambil data dari API Swakelola
-        $data_swakelola = file_get_contents($api_swakelola_url);
-
-        // Konversi data JSON menjadi array asosiatif
-        $data_swakelola = json_decode($data_swakelola, true);
-
-        // Gabungkan data dari API Penyedia dan API Swakelola berdasarkan KD_SATKER
+        // Gabungkan data dari API Penyedia, API Swakelola, dan API StrukturAnggaran berdasarkan KD_SATKER
         $grouped_data = array();
         foreach ($data_penyedia as $item) {
             $kd_satker = $item['kd_satker'];
@@ -47,6 +39,7 @@ class ApiDataController extends CI_Controller {
                     'pagu_pdn' => 0,
                     'paket_ukm' => 0,
                     'pagu_ukm' => 0,
+                    'belanja_pengadaan' => 0,
                 );
             }
 
@@ -76,6 +69,7 @@ class ApiDataController extends CI_Controller {
                     'pagu_pdn' => 0,
                     'paket_ukm' => 0,
                     'pagu_ukm' => 0,
+                    'belanja_pengadaan' => 0,
                 );
             }
 
@@ -107,14 +101,54 @@ class ApiDataController extends CI_Controller {
             }
         }
 
-        // Hitung % PDN dan % UKM
-        foreach ($grouped_data as $kd_satker => $data) {
-            $grouped_data[$kd_satker]['percent_pdn'] = $data['total_paket'] != 0 ? round(($data['paket_pdn'] / $data['total_paket']) * 100, 2) : 0;
-            $grouped_data[$kd_satker]['percent_ukm'] = $data['total_paket'] != 0 ? round(($data['paket_ukm'] / $data['total_paket']) * 100, 2) : 0;
+        // Menambahkan nilai "Belanja Pengadaan" berdasarkan data dari API StrukturAnggaran
+        foreach ($data_struktur_anggaran as $item) {
+            $kd_satker = $item['kd_satker'];
+            if (isset($grouped_data[$kd_satker])) {
+                $grouped_data[$kd_satker]['belanja_pengadaan'] = $item['belanja_pengadaan'];
+            }
         }
+
+        // Hitung % PDN, % UKM, dan % Pengadaan terhadap Total Pagu
+        foreach ($grouped_data as $kd_satker => $data) {
+            $grouped_data[$kd_satker]['percent_pdn'] = $data['total_pagu'] != 0 ? round(($data['pagu_pdn'] / $data['total_pagu']) * 100, 2) : 0;
+            $grouped_data[$kd_satker]['percent_ukm'] = $data['total_pagu'] != 0 ? round(($data['pagu_ukm'] / $data['total_pagu']) * 100, 2) : 0;
+            $grouped_data[$kd_satker]['percent_pagu'] = $data['total_pagu'] != 0 ? round(($data['belanja_pengadaan'] / $data['total_pagu']) * 100, 2) : 0;
+        }
+
+        // Menghitung total seluruh belanja_pengadaan
+        $totalBelanjaPengadaanData = 0;
+        foreach ($data_struktur_anggaran as $item) {
+            $totalBelanjaPengadaanData += $item['belanja_pengadaan'];
+        }
+
+        // Menghitung total pagu Penyedia
+        $totalPaguPenyedia = 0;
+        foreach ($data_penyedia as $item) {
+            $totalPaguPenyedia += $item['pagu'];
+        }
+
+        // Menghitung total pagu Swakelola
+        $totalPaguSwakelola = 0;
+        foreach ($data_swakelola as $item) {
+            $totalPaguSwakelola += $item['pagu'];
+        }
+
+        // Menghitung total seluruh pagu (Pagu Penyedia + Pagu Swakelola)
+        $totalPaguData = $totalPaguPenyedia + $totalPaguSwakelola;
+
+        // Menghitung persentase dari total pagu dan total belanja pengadaan
+        $percentPaguData = $totalPaguData != 0 ? round(($totalPaguData / $totalPaguData) * 100, 2) : 0;
+        $percentBelanjaPengadaanData = $totalPaguData != 0 ? round(($totalBelanjaPengadaanData / $totalPaguData) * 100, 2) : 0;
 
         // Kirim data ke view
         $data['grouped_data'] = $grouped_data;
+        $data['totalBelanjaPengadaanData'] = $totalBelanjaPengadaanData;
+        $data['totalPaguData'] = $totalPaguData;
+        $data['percentPaguData'] = $percentPaguData;
+        $data['percentBelanjaPengadaanData'] = $percentBelanjaPengadaanData;
+        $data['active_menu'] = 'rekap';
         $this->load->view('api_data_view', $data);
     }
+
 }
