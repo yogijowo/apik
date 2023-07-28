@@ -54,12 +54,8 @@
                                 <th rowspan="2">Total Pagu</th>
                                 <th rowspan="2">Belanja Pengadaan</th>
                                 <th rowspan="2">% Pagu</th>
-                                <th rowspan="2">Paket PDN</th>
-                                <th rowspan="2">Pagu PDN</th>
-                                <th rowspan="2">Paket UKM</th>
-                                <th rowspan="2">Pagu UKM</th>
-                                <th rowspan="2">% PDN</th>
-                                <th rowspan="2">% UKM</th>
+                                <th colspan="3">PDN</th>
+                                <th colspan="3">UKM</th>
                             </tr>
                             <tr>
                                 <th>P</th>
@@ -68,6 +64,12 @@
                                 <th>P</th>
                                 <th>S</th>
                                 <th>PDS</th>
+                                <th>Paket</th>
+                                <th>Pagu</th>
+                                <th>%</th>
+                                <th>Paket</th>
+                                <th>Pagu</th>
+                                <th>%</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -86,9 +88,9 @@
                                     <td><?= $data['percent_pagu']; ?>%</td>
                                     <td><?= $data['paket_pdn']; ?></td>
                                     <td><?= format_rupiah($data['pagu_pdn']); ?></td>
+                                    <td><?= $data['percent_pdn']; ?>%</td>
                                     <td><?= $data['paket_ukm']; ?></td>
                                     <td><?= format_rupiah($data['pagu_ukm']); ?></td>
-                                    <td><?= $data['percent_pdn']; ?>%</td>
                                     <td><?= $data['percent_ukm']; ?>%</td>
                                 </tr>
                             <?php endforeach; ?>
